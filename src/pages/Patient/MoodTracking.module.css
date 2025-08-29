@@ -1,0 +1,539 @@
+.container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e1e5e9;
+}
+
+.header h1 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.addButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+}
+
+.addButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.error {
+  background: #fee;
+  color: #c53030;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #feb2b2;
+}
+
+/* Form Styles */
+.formOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.form {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.formHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.formHeader h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 20px;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 8px;
+  color: #374151;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.formGroup textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.formGroup textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Mood Grid */
+.moodGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.moodOption {
+  cursor: pointer;
+}
+
+.moodOption input[type="radio"] {
+  display: none;
+}
+
+.moodCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 12px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.moodOption input[type="radio"]:checked + .moodCard {
+  border-color: #667eea;
+  background: #f8faff;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.moodCard:hover {
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.moodEmoji {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.moodLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  text-align: center;
+}
+
+.formActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #e1e5e9;
+}
+
+.submitButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancelButton {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 2px solid #e1e5e9;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelButton:hover {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}
+
+/* Table Styles */
+.tableContainer {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.loading {
+  padding: 40px;
+  text-align: center;
+  color: #64748b;
+  font-size: 16px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th {
+  background: #f8fafc;
+  padding: 16px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #e1e5e9;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+
+.tableRow:hover {
+  background: #f8fafc;
+}
+
+.dateTime {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.date {
+  font-weight: 500;
+  color: #374151;
+}
+
+.time {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.moodDisplay {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.moodText {
+  font-weight: 500;
+  color: #374151;
+}
+
+.moodLevel {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Mood Level Colors */
+.very_happy {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.happy {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.neutral {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.sad {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.very_sad {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.anxious {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.stressed {
+  background: #fecaca;
+  color: #7f1d1d;
+}
+
+.excited {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.calm {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.angry {
+  background: #fecaca;
+  color: #7f1d1d;
+}
+
+.notes {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.noNotes {
+  color: #cbd5e1;
+  font-style: italic;
+}
+
+.noData {
+  text-align: center;
+  padding: 40px;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* Insights Section */
+.insightsSection {
+  background: white;
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.insightsSection h3 {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.insightsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.insightCard {
+  padding: 20px;
+  border-radius: 8px;
+  border: 2px solid #e1e5e9;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.insightCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.insightCard h4 {
+  margin: 0 0 15px 0;
+  color: #2c3e50;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.insightValue {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.insightValue .moodEmoji {
+  font-size: 32px;
+}
+
+.insightValue .number {
+  font-size: 24px;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.insightValue span:not(.moodEmoji):not(.number) {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.accessDenied {
+  text-align: center;
+  padding: 60px 20px;
+  color: #64748b;
+}
+
+.accessDenied h2 {
+  color: #ef4444;
+  margin-bottom: 10px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 15px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+
+  .header h1 {
+    font-size: 24px;
+    text-align: center;
+  }
+
+  .form {
+    width: 95%;
+    padding: 20px;
+  }
+
+  .moodGrid {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px;
+  }
+
+  .moodCard {
+    padding: 12px 8px;
+  }
+
+  .moodEmoji {
+    font-size: 20px;
+  }
+
+  .moodLabel {
+    font-size: 11px;
+  }
+
+  .table {
+    font-size: 12px;
+  }
+
+  .table th,
+  .table td {
+    padding: 12px 8px;
+  }
+
+  .insightsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .formActions {
+    flex-direction: column;
+  }
+
+  .submitButton,
+  .cancelButton {
+    width: 100%;
+  }
+
+  .moodGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .insightCard {
+    padding: 15px;
+  }
+}
