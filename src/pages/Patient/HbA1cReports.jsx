@@ -5,59 +5,41 @@ import { patientAPI } from '../../api/patient';
 import { formatDate } from '../../utils/helpers';
 import styles from './HbA1cReports.module.css';
 
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'All' },
+  { value: 'normal', label: 'Normal' },
+  { value: 'prediabetes', label: 'Prediabetes' },
+  { value: 'diabetes', label: 'Diabetes' },
+];
+
 const HbA1cReports = () => {
   const { user } = useAuthStore();
   const [reports, setReports] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingReport, setEditingReport] = useState(null);
   const [formData, setFormData] = useState({
     hba1c_value: '',
     test_date: '',
     notes: ''
   });
+  const [filterStatus, setFilterStatus] = useState('all');
 
   const { loading, error, callApi } = useApi();
 
-  // Fetch HbA1c reports
   const fetchReports = async () => {
     const data = await callApi(patientAPI.getHbA1cReports);
-    if (data) {
-      setReports(data);
-    }
+    if (data) setReports(data);
   };
 
   useEffect(() => {
     fetchReports();
   }, []);
 
-  // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Handle form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    try {
-      await callApi(() => patientAPI.createHbA1cReport(formData));
-      
-      setShowForm(false);
-      setFormData({
-        hba1c_value: '',
-        test_date: '',
-        notes: ''
-      });
-      fetchReports();
-    } catch (error) {
-      console.error('Error creating HbA1c report:', error);
-    }
-  };
-
-  // Get HbA1c status
   const getHbA1cStatus = (value) => {
     const numValue = parseFloat(value);
     if (numValue < 5.7) return 'normal';
@@ -65,7 +47,57 @@ const HbA1cReports = () => {
     return 'diabetes';
   };
 
-  // Check if user has access
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingReport) {
+        await callApi(() => patientAPI.updateHbA1cReport(editingReport.id, formData));
+      } else {
+        await callApi(() => patientAPI.createHbA1cReport(formData));
+      }
+      resetForm();
+      fetchReports();
+    } catch (err) {
+      console.error('Error saving HbA1c report:', err);
+    }
+  };
+
+  const resetForm = () => {
+    setShowForm(false);
+    setEditingReport(null);
+    setFormData({
+      hba1c_value: '',
+      test_date: '',
+      notes: ''
+    });
+  };
+
+  const handleEdit = (report) => {
+    setEditingReport(report);
+    setFormData({
+      hba1c_value: report.hba1c_value.toString(),
+      test_date: report.test_date,
+      notes: report.notes || ''
+    });
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this report?')) return;
+    try {
+      await callApi(() => patientAPI.deleteHbA1cReport(id));
+      fetchReports();
+    } catch (err) {
+      console.error('Error deleting HbA1c report:', err);
+    }
+  };
+
+  const handleFilterChange = (e) => setFilterStatus(e.target.value);
+
+  const filteredReports = reports.filter(r => 
+    filterStatus === 'all' ? true : getHbA1cStatus(r.hba1c_value) === filterStatus
+  );
+
   if (user?.role !== 'patient') {
     return (
       <div className={styles.container}>
@@ -81,41 +113,29 @@ const HbA1cReports = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1>HbA1c Reports</h1>
-        <button 
-          className={styles.addButton}
-          onClick={() => setShowForm(true)}
-        >
-          Add New Report
-        </button>
+        <button className={styles.addButton} onClick={() => setShowForm(true)}>Add New Report</button>
       </div>
 
-      {error && (
-        <div className={styles.error}>
-          {error}
-        </div>
-      )}
+      {error && <div className={styles.error}>{error}</div>}
+
+      {/* Filter */}
+      <div className={styles.filterContainer}>
+        <label htmlFor="statusFilter">Filter by Status: </label>
+        <select id="statusFilter" value={filterStatus} onChange={handleFilterChange}>
+          {STATUS_OPTIONS.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
 
       {/* Form */}
       {showForm && (
         <div className={styles.formOverlay}>
           <div className={styles.form}>
             <div className={styles.formHeader}>
-              <h2>Add New HbA1c Report</h2>
-              <button 
-                className={styles.closeButton}
-                onClick={() => {
-                  setShowForm(false);
-                  setFormData({
-                    hba1c_value: '',
-                    test_date: '',
-                    notes: ''
-                  });
-                }}
-              >
-                ×
-              </button>
+              <h2>{editingReport ? 'Edit HbA1c Report' : 'Add New HbA1c Report'}</h2>
+              <button className={styles.closeButton} onClick={resetForm}>×</button>
             </div>
-            
             <form onSubmit={handleSubmit}>
               <div className={styles.formGroup}>
                 <label htmlFor="hba1c_value">HbA1c Value (%)</label>
@@ -135,46 +155,19 @@ const HbA1cReports = () => {
 
               <div className={styles.formGroup}>
                 <label htmlFor="test_date">Test Date</label>
-                <input
-                  type="date"
-                  id="test_date"
-                  name="test_date"
-                  value={formData.test_date}
-                  onChange={handleInputChange}
-                  required
-                />
+                <input type="date" id="test_date" name="test_date" value={formData.test_date} onChange={handleInputChange} required />
               </div>
 
               <div className={styles.formGroup}>
                 <label htmlFor="notes">Notes</label>
-                <textarea
-                  id="notes"
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleInputChange}
-                  rows="3"
-                  placeholder="Any additional notes about the test..."
-                />
+                <textarea id="notes" name="notes" value={formData.notes} onChange={handleInputChange} rows="3" placeholder="Any additional notes..." />
               </div>
 
               <div className={styles.formActions}>
                 <button type="submit" className={styles.submitButton} disabled={loading}>
-                  {loading ? 'Saving...' : 'Save Report'}
+                  {loading ? 'Saving...' : (editingReport ? 'Update' : 'Save')}
                 </button>
-                <button 
-                  type="button" 
-                  className={styles.cancelButton}
-                  onClick={() => {
-                    setShowForm(false);
-                    setFormData({
-                      hba1c_value: '',
-                      test_date: '',
-                      notes: ''
-                    });
-                  }}
-                >
-                  Cancel
-                </button>
+                <button type="button" className={styles.cancelButton} onClick={resetForm}>Cancel</button>
               </div>
             </form>
           </div>
@@ -194,51 +187,35 @@ const HbA1cReports = () => {
                 <th>Status</th>
                 <th>Notes</th>
                 <th>Created</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {reports.length === 0 ? (
+              {filteredReports.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className={styles.noData}>
-                    No HbA1c reports found. Add your first report!
-                  </td>
+                  <td colSpan="6" className={styles.noData}>No HbA1c reports found for selected filter!</td>
                 </tr>
               ) : (
-                reports.map((report) => {
+                filteredReports.map(report => {
                   const status = getHbA1cStatus(report.hba1c_value);
                   return (
                     <tr key={report.id} className={styles.tableRow}>
-                      <td>
-                        <span className={styles.testDate}>
-                          {formatDate(report.test_date)}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`${styles.hba1cValue} ${styles[status]}`}>
-                          {report.hba1c_value}%
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`${styles.status} ${styles[status]}`}>
-                          {status}
-                        </span>
-                      </td>
+                      <td>{formatDate(report.test_date)}</td>
+                      <td><span className={`${styles.hba1cValue} ${styles[status]}`}>{report.hba1c_value}%</span></td>
+                      <td><span className={`${styles.status} ${styles[status]}`}>{status}</span></td>
                       <td>
                         {report.notes ? (
                           <span className={styles.notes} title={report.notes}>
-                            {report.notes.length > 50 
-                              ? `${report.notes.substring(0, 50)}...` 
-                              : report.notes
-                            }
+                            {report.notes.length > 50 ? `${report.notes.substring(0,50)}...` : report.notes}
                           </span>
-                        ) : (
-                          <span className={styles.noNotes}>-</span>
-                        )}
+                        ) : <span className={styles.noNotes}>-</span>}
                       </td>
+                      <td>{formatDate(report.created_at)}</td>
                       <td>
-                        <span className={styles.createdDate}>
-                          {formatDate(report.created_at)}
-                        </span>
+                        <div className={styles.actions}>
+                          <button className={styles.editButton} onClick={() => handleEdit(report)}>Edit</button>
+                          <button className={styles.deleteButton} onClick={() => handleDelete(report.id)}>Delete</button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -247,28 +224,6 @@ const HbA1cReports = () => {
             </tbody>
           </table>
         )}
-      </div>
-
-      {/* Info Section */}
-      <div className={styles.infoSection}>
-        <h3>About HbA1c</h3>
-        <div className={styles.infoGrid}>
-          <div className={styles.infoCard}>
-            <h4>Normal</h4>
-            <p>&lt; 5.7%</p>
-            <span className={styles.normal}>Healthy blood sugar control</span>
-          </div>
-          <div className={styles.infoCard}>
-            <h4>Prediabetes</h4>
-            <p>5.7% - 6.4%</p>
-            <span className={styles.prediabetes}>Increased risk of diabetes</span>
-          </div>
-          <div className={styles.infoCard}>
-            <h4>Diabetes</h4>
-            <p>≥ 6.5%</p>
-            <span className={styles.diabetes}>Diabetes diagnosis</span>
-          </div>
-        </div>
       </div>
     </div>
   );
