@@ -6,13 +6,6 @@ import { formatDate, formatTime, getGlucoseStatus } from '../../utils/helpers';
 import { GLUCOSE_SOURCES } from '../../utils/constants';
 import styles from './GlucoseReadings.module.css';
 
-const STATUS_OPTIONS = [
-  { value: 'all', label: 'All' },
-  { value: 'normal', label: 'Normal' },
-  { value: 'high', label: 'High' },
-  { value: 'low', label: 'Low' },
-];
-
 const GlucoseReadings = () => {
   const { user } = useAuthStore();
   const [readings, setReadings] = useState([]);
@@ -24,51 +17,56 @@ const GlucoseReadings = () => {
     meal_context: 'before_breakfast',
     notes: ''
   });
-  const [filterStatus, setFilterStatus] = useState('all');
 
   const { loading, error, callApi } = useApi();
 
-  // Fetch readings
+  // Fetch glucose readings
   const fetchReadings = async () => {
     const data = await callApi(patientAPI.getGlucoseReadings);
-    if (data) setReadings(data);
+    if (data) {
+      setReadings(data);
+    }
   };
 
   useEffect(() => {
     fetchReadings();
   }, []);
 
+  // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     try {
       if (editingReading) {
         await callApi(() => patientAPI.updateGlucoseReading(editingReading.id, formData));
       } else {
         await callApi(() => patientAPI.createGlucoseReading(formData));
       }
-      resetForm();
+      
+      setShowForm(false);
+      setEditingReading(null);
+      setFormData({
+        glucose_value: '',
+        source: 'finger_prick',
+        meal_context: 'before_breakfast',
+        notes: ''
+      });
       fetchReadings();
-    } catch (err) {
-      console.error('Error saving glucose reading:', err);
+    } catch (error) {
+      console.error('Error saving glucose reading:', error);
     }
   };
 
-  const resetForm = () => {
-    setShowForm(false);
-    setEditingReading(null);
-    setFormData({
-      glucose_value: '',
-      source: 'finger_prick',
-      meal_context: 'before_breakfast',
-      notes: ''
-    });
-  };
-
+  // Handle edit
   const handleEdit = (reading) => {
     setEditingReading(reading);
     setFormData({
@@ -80,22 +78,19 @@ const GlucoseReadings = () => {
     setShowForm(true);
   };
 
+  // Handle delete
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this reading?')) return;
-    try {
-      await callApi(() => patientAPI.deleteGlucoseReading(id));
-      fetchReadings();
-    } catch (err) {
-      console.error('Error deleting glucose reading:', err);
+    if (window.confirm('Are you sure you want to delete this reading?')) {
+      try {
+        await callApi(() => patientAPI.deleteGlucoseReading(id));
+        fetchReadings();
+      } catch (error) {
+        console.error('Error deleting glucose reading:', error);
+      }
     }
   };
 
-  const handleFilterChange = (e) => setFilterStatus(e.target.value);
-
-  const filteredReadings = readings.filter(r => 
-    filterStatus === 'all' ? true : getGlucoseStatus(r.glucose_value) === filterStatus
-  );
-
+  // Check if user has access
   if (user?.role !== 'patient') {
     return (
       <div className={styles.container}>
@@ -107,31 +102,23 @@ const GlucoseReadings = () => {
     );
   }
 
-  const average = readings.length
-    ? (readings.reduce((sum, r) => sum + r.glucose_value, 0) / readings.length).toFixed(1)
-    : null;
-
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h1>Glucose Readings</h1>
-        <button className={styles.addButton} onClick={() => setShowForm(true)}>
+        <button 
+          className={styles.addButton}
+          onClick={() => setShowForm(true)}
+        >
           Add New Reading
         </button>
       </div>
 
-      {error && <div className={styles.error}>{error}</div>}
-      {average && <div className={styles.average}>Average Glucose: {average} mg/dL</div>}
-
-      {/* Filter */}
-      <div className={styles.filterContainer}>
-        <label htmlFor="statusFilter">Filter by Status: </label>
-        <select id="statusFilter" value={filterStatus} onChange={handleFilterChange}>
-          {STATUS_OPTIONS.map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-      </div>
+      {error && (
+        <div className={styles.error}>
+          {error}
+        </div>
+      )}
 
       {/* Form */}
       {showForm && (
@@ -139,8 +126,23 @@ const GlucoseReadings = () => {
           <div className={styles.form}>
             <div className={styles.formHeader}>
               <h2>{editingReading ? 'Edit Reading' : 'Add New Reading'}</h2>
-              <button className={styles.closeButton} onClick={resetForm}>×</button>
+              <button 
+                className={styles.closeButton}
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingReading(null);
+                  setFormData({
+                    glucose_value: '',
+                    source: 'finger_prick',
+                    meal_context: 'before_breakfast',
+                    notes: ''
+                  });
+                }}
+              >
+                ×
+              </button>
             </div>
+            
             <form onSubmit={handleSubmit}>
               <div className={styles.formGroup}>
                 <label htmlFor="glucose_value">Glucose Value (mg/dL)</label>
@@ -158,7 +160,13 @@ const GlucoseReadings = () => {
 
               <div className={styles.formGroup}>
                 <label htmlFor="source">Source</label>
-                <select id="source" name="source" value={formData.source} onChange={handleInputChange}>
+                <select
+                  id="source"
+                  name="source"
+                  value={formData.source}
+                  onChange={handleInputChange}
+                  required
+                >
                   {Object.entries(GLUCOSE_SOURCES).map(([key, label]) => (
                     <option key={key} value={key}>{label}</option>
                   ))}
@@ -167,25 +175,55 @@ const GlucoseReadings = () => {
 
               <div className={styles.formGroup}>
                 <label htmlFor="meal_context">Meal Context</label>
-                <select id="meal_context" name="meal_context" value={formData.meal_context} onChange={handleInputChange}>
-                  {['before_breakfast','after_breakfast','before_lunch','after_lunch','before_dinner','after_dinner','bedtime','other']
-                    .map(val => (
-                      <option key={val} value={val}>{val.replace('_',' ')}</option>
-                    ))
-                  }
+                <select
+                  id="meal_context"
+                  name="meal_context"
+                  value={formData.meal_context}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="before_breakfast">Before Breakfast</option>
+                  <option value="after_breakfast">After Breakfast</option>
+                  <option value="before_lunch">Before Lunch</option>
+                  <option value="after_lunch">After Lunch</option>
+                  <option value="before_dinner">Before Dinner</option>
+                  <option value="after_dinner">After Dinner</option>
+                  <option value="bedtime">Bedtime</option>
+                  <option value="other">Other</option>
                 </select>
               </div>
 
               <div className={styles.formGroup}>
                 <label htmlFor="notes">Notes</label>
-                <textarea id="notes" name="notes" value={formData.notes} onChange={handleInputChange} rows="3" />
+                <textarea
+                  id="notes"
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleInputChange}
+                  rows="3"
+                />
               </div>
 
               <div className={styles.formActions}>
                 <button type="submit" className={styles.submitButton} disabled={loading}>
                   {loading ? 'Saving...' : (editingReading ? 'Update' : 'Save')}
                 </button>
-                <button type="button" className={styles.cancelButton} onClick={resetForm}>Cancel</button>
+                <button 
+                  type="button" 
+                  className={styles.cancelButton}
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditingReading(null);
+                    setFormData({
+                      glucose_value: '',
+                      source: 'finger_prick',
+                      meal_context: 'before_breakfast',
+                      notes: ''
+                    });
+                  }}
+                >
+                  Cancel
+                </button>
               </div>
             </form>
           </div>
@@ -210,14 +248,14 @@ const GlucoseReadings = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredReadings.length === 0 ? (
+              {readings.length === 0 ? (
                 <tr>
                   <td colSpan="7" className={styles.noData}>
-                    No glucose readings found for selected filter!
+                    No glucose readings found. Add your first reading!
                   </td>
                 </tr>
               ) : (
-                filteredReadings.map((reading) => {
+                readings.map((reading) => {
                   const status = getGlucoseStatus(reading.glucose_value);
                   return (
                     <tr key={reading.id} className={styles.tableRow}>
@@ -233,14 +271,19 @@ const GlucoseReadings = () => {
                         </span>
                       </td>
                       <td>
-                        <span className={`${styles.status} ${styles[status]}`}>{status}</span>
+                        <span className={`${styles.status} ${styles[status]}`}>
+                          {status}
+                        </span>
                       </td>
                       <td>{GLUCOSE_SOURCES[reading.source] || reading.source}</td>
                       <td>{reading.meal_context.replace('_', ' ')}</td>
                       <td>
                         {reading.notes ? (
                           <span className={styles.notes} title={reading.notes}>
-                            {reading.notes.length > 30 ? `${reading.notes.substring(0,30)}...` : reading.notes}
+                            {reading.notes.length > 30 
+                              ? `${reading.notes.substring(0, 30)}...` 
+                              : reading.notes
+                            }
                           </span>
                         ) : (
                           <span className={styles.noNotes}>-</span>
@@ -248,8 +291,20 @@ const GlucoseReadings = () => {
                       </td>
                       <td>
                         <div className={styles.actions}>
-                          <button className={styles.editButton} onClick={() => handleEdit(reading)}>Edit</button>
-                          <button className={styles.deleteButton} onClick={() => handleDelete(reading.id)}>Delete</button>
+                          <button
+                            className={styles.editButton}
+                            onClick={() => handleEdit(reading)}
+                            title="Edit"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className={styles.deleteButton}
+                            onClick={() => handleDelete(reading.id)}
+                            title="Delete"
+                          >
+                            Delete
+                          </button>
                         </div>
                       </td>
                     </tr>

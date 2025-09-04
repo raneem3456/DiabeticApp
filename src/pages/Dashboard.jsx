@@ -1,51 +1,49 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth.js';
-import DashboardLayout from '../layouts/DashboardLayout.jsx';
 import { ROLES } from '../utils/constants.js';
-import styles from './Dashboard.module.css';
-
-// Import role-specific dashboard components
-import PatientDashboard from './dashboard/PatientDashboard.jsx';
-import DoctorDashboard from './dashboard/DoctorDashboard.jsx';
-import NutritionistDashboard from './dashboard/NutritionistDashboard.jsx';
-import CoachDashboard from './dashboard/CoachDashboard.jsx';
-import AdminDashboard from './dashboard/AdminDashboard.jsx';
-import FamilyDashboard from './dashboard/FamilyDashboard.jsx';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
-  const renderDashboardContent = () => {
-    switch (user?.role) {
-      case ROLES.PATIENT:
-        return <PatientDashboard />;
-      case ROLES.DOCTOR:
-        return <DoctorDashboard />;
-      case ROLES.NUTRITIONIST:
-        return <NutritionistDashboard />;
-      case ROLES.COACH:
-        return <CoachDashboard />;
-      case ROLES.ADMIN:
-        return <AdminDashboard />;
-      case ROLES.FAMILY:
-        return <FamilyDashboard />;
-      default:
-        return <div>Welcome to your dashboard!</div>;
-    }
-  };
-
-  return (
-    <DashboardLayout>
-      <div className={styles.dashboard}>
-        <div className={styles.header}>
-          <h1>Welcome back, {user?.name}!</h1>
-          <p>Here's what's happening with your diabetes management today.</p>
-        </div>
-        
-        {renderDashboardContent()}
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        fontSize: '1.2rem',
+        color: '#666'
+      }}>
+        Loading...
       </div>
-    </DashboardLayout>
-  );
+    );
+  }
+
+  // Redirect to role-specific dashboard
+  if (user?.role) {
+    switch (user.role) {
+      case ROLES.PATIENT:
+        return <Navigate to="/patient/dashboard" replace />;
+      case ROLES.DOCTOR:
+        return <Navigate to="/doctor/dashboard" replace />;
+      case ROLES.NUTRITIONIST:
+        return <Navigate to="/nutritionist/dashboard" replace />;
+      case ROLES.COACH:
+        return <Navigate to="/coach/dashboard" replace />;
+      case ROLES.ADMIN:
+        return <Navigate to="/admin/dashboard" replace />;
+      case ROLES.FAMILY:
+        return <Navigate to="/family/dashboard" replace />;
+      default:
+        return <Navigate to="/login" replace />;
+    }
+  }
+
+  // If no user, redirect to login
+  return <Navigate to="/login" replace />;
 };
 
 export default Dashboard;
