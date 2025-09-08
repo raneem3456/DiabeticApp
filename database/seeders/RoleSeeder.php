@@ -12,6 +12,7 @@ class RoleSeeder extends Seeder
     {
         // Create roles
         $patient = Role::create(['name' => 'patient']);
+        $child = Role::create(['name' => 'child']);
         $doctor = Role::create(['name' => 'doctor']);
         $nutritionist = Role::create(['name' => 'nutritionist']);
         $coach = Role::create(['name' => 'coach']);
@@ -31,6 +32,16 @@ class RoleSeeder extends Seeder
             'create_nutrition_logs',
             'view_own_workout_logs',
             'create_workout_logs',
+            
+            // Child permissions (basic patient functionality)
+            'view_own_glucose_readings',
+            'create_glucose_readings',
+            'view_own_profile',
+            'view_own_nutrition_logs',
+            'view_own_workout_logs',
+            'view_own_moods',
+            'view_own_hba1c_reports',
+            'view_own_challenge_entries',
             
             // Doctor permissions
             'view_patient_data',
@@ -55,8 +66,20 @@ class RoleSeeder extends Seeder
             'manage_rewards',
             'view_all_data',
             
-            // Family permissions
+            // Family permissions (advanced patient management)
             'view_family_patient_data',
+            'view_family_glucose_readings',
+            'view_family_nutrition_logs',
+            'view_family_workout_logs',
+            'view_family_moods',
+            'view_family_hba1c_reports',
+            'view_family_challenge_entries',
+            'view_family_medications',
+            'view_family_doctor_notes',
+            'create_family_emergency_contacts',
+            'manage_family_emergency_alerts',
+            'view_family_meal_plans',
+            'view_family_workout_plans',
         ];
 
         foreach ($permissions as $permission) {
@@ -75,6 +98,17 @@ class RoleSeeder extends Seeder
             'create_nutrition_logs',
             'view_own_workout_logs',
             'create_workout_logs',
+        ]);
+
+        $child->givePermissionTo([
+            'view_own_glucose_readings',
+            'create_glucose_readings',
+            'view_own_profile',
+            'view_own_nutrition_logs',
+            'view_own_workout_logs',
+            'view_own_moods',
+            'view_own_hba1c_reports',
+            'view_own_challenge_entries',
         ]);
 
         $doctor->givePermissionTo([
@@ -99,6 +133,18 @@ class RoleSeeder extends Seeder
 
         $family->givePermissionTo([
             'view_family_patient_data',
+            'view_family_glucose_readings',
+            'view_family_nutrition_logs',
+            'view_family_workout_logs',
+            'view_family_moods',
+            'view_family_hba1c_reports',
+            'view_family_challenge_entries',
+            'view_family_medications',
+            'view_family_doctor_notes',
+            'create_family_emergency_contacts',
+            'manage_family_emergency_alerts',
+            'view_family_meal_plans',
+            'view_family_workout_plans',
         ]);
 
         $admin->givePermissionTo(Permission::all());

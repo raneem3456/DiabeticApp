@@ -28,12 +28,16 @@ use App\Http\Controllers\Admin\SurveyQuestionController;
 use App\Http\Controllers\Admin\SurveyAnswerController;
 use App\Http\Controllers\Admin\RewardController;
 use App\Http\Controllers\Admin\UserPointController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminNotificationController;
 use App\Http\Controllers\Community\PostController;
 use App\Http\Controllers\Community\CommentController;
 use App\Http\Controllers\Chat\ChatController;
 use App\Http\Controllers\Chat\MessageController;
 use App\Http\Controllers\Emergency\EmergencyContactController;
 use App\Http\Controllers\Emergency\EmergencyAlertController;
+use App\Http\Controllers\ChildController;
+use App\Http\Controllers\FamilyController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -56,6 +60,19 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('profile', [ProfileController::class, 'show']);
         Route::post('profile', [ProfileController::class, 'store']);
         Route::put('profile', [ProfileController::class, 'update']);
+    });
+
+    // Child routes (basic patient functionality)
+    Route::prefix('child')->middleware('role:child')->group(function () {
+        Route::get('glucose-readings', [ChildController::class, 'glucoseReadings']);
+        Route::post('glucose-readings', [ChildController::class, 'createGlucoseReading']);
+        Route::get('nutrition-logs', [ChildController::class, 'nutritionLogs']);
+        Route::get('workout-logs', [ChildController::class, 'workoutLogs']);
+        Route::get('moods', [ChildController::class, 'moods']);
+        Route::get('hba1c-reports', [ChildController::class, 'hba1cReports']);
+        Route::get('challenge-entries', [ChildController::class, 'challengeEntries']);
+        Route::get('profile', [ChildController::class, 'profile']);
+        Route::get('dashboard', [ChildController::class, 'dashboard']);
     });
 
     // Doctor routes
@@ -108,19 +125,96 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Admin routes
     Route::prefix('admin')->middleware('role:admin')->group(function () {
+        // Dashboard and Analytics
+        Route::get('dashboard/overview', [AdminDashboardController::class, 'overview']);
+        Route::get('dashboard/user-management', [AdminDashboardController::class, 'userManagement']);
+        Route::get('dashboard/user/{userId}', [AdminDashboardController::class, 'userDetails']);
+        Route::post('dashboard/bulk-user-actions', [AdminDashboardController::class, 'bulkUserActions']);
+        Route::get('dashboard/system-analytics', [AdminDashboardController::class, 'systemAnalytics']);
+        Route::get('dashboard/system-health', [AdminDashboardController::class, 'systemHealth']);
+        Route::post('dashboard/export-data', [AdminDashboardController::class, 'exportData']);
+        // New: Users and stats
+        Route::get('dashboard/users', [AdminDashboardController::class, 'users']);
+        Route::get('dashboard/user-counts', [AdminDashboardController::class, 'userCounts']);
+        Route::get('dashboard/role-counts', [AdminDashboardController::class, 'roleCounts']);
+        Route::get('dashboard/global-stats', [AdminDashboardController::class, 'globalStats']);
+
+        // Content Moderation
+        Route::get('moderation/content', [AdminDashboardController::class, 'contentModeration']);
+        Route::post('moderation/content/{postId}', [AdminDashboardController::class, 'moderateContent']);
+
+        // Surveys
         Route::apiResource('surveys', SurveyController::class);
+        Route::post('surveys/bulk-publish', [SurveyController::class, 'bulkPublish']);
+        Route::post('surveys/bulk-unpublish', [SurveyController::class, 'bulkUnpublish']);
+        Route::post('surveys/bulk-delete', [SurveyController::class, 'bulkDelete']);
+        Route::get('surveys/{survey}/analytics', [SurveyController::class, 'analytics']);
+        Route::get('surveys/{survey}/export-responses', [SurveyController::class, 'exportResponses']);
+        Route::post('surveys/{survey}/duplicate', [SurveyController::class, 'duplicate']);
+
+        // Challenges
         Route::apiResource('challenges', ChallengeController::class);
+        Route::post('challenges/bulk-activate', [ChallengeController::class, 'bulkActivate']);
+        Route::post('challenges/bulk-deactivate', [ChallengeController::class, 'bulkDeactivate']);
+        Route::post('challenges/bulk-delete', [ChallengeController::class, 'bulkDelete']);
+        Route::get('challenges/{challenge}/analytics', [ChallengeController::class, 'analytics']);
+        Route::get('challenges/{challenge}/participants', [ChallengeController::class, 'participants']);
+        Route::post('challenges/{challenge}/add-participant', [ChallengeController::class, 'addParticipant']);
+        Route::delete('challenges/{challenge}/remove-participant/{userId}', [ChallengeController::class, 'removeParticipant']);
+        Route::put('challenges/{challenge}/participant/{userId}/progress', [ChallengeController::class, 'updateParticipantProgress']);
+        Route::get('challenges/{challenge}/export-participants', [ChallengeController::class, 'exportParticipants']);
+        Route::post('challenges/{challenge}/duplicate', [ChallengeController::class, 'duplicate']);
+
+        // User Points
+        Route::apiResource('user-points', UserPointController::class);
+        Route::get('user-points/{userId}/total', [UserPointController::class, 'userTotal']);
+        Route::post('user-points/bulk-award', [UserPointController::class, 'bulkAward']);
+        Route::post('user-points/bulk-deduct', [UserPointController::class, 'bulkDeduct']);
+        Route::get('user-points/analytics/overview', [UserPointController::class, 'analytics']);
+        Route::get('user-points/analytics/user/{userId}', [UserPointController::class, 'userAnalytics']);
+        Route::get('user-points/leaderboard', [UserPointController::class, 'leaderboard']);
+        Route::get('user-points/export', [UserPointController::class, 'exportUserPoints']);
+
+        // Notifications
+        Route::apiResource('notifications', AdminNotificationController::class);
+        Route::post('notifications/send-broadcast', [AdminNotificationController::class, 'sendBroadcast']);
+        Route::post('notifications/schedule', [AdminNotificationController::class, 'scheduleNotification']);
+        Route::post('notifications/{notification}/cancel', [AdminNotificationController::class, 'cancelNotification']);
+        Route::post('notifications/{notification}/duplicate', [AdminNotificationController::class, 'duplicateNotification']);
+        Route::get('notifications/analytics/overview', [AdminNotificationController::class, 'analytics']);
+        Route::get('notifications/user/{userId}', [AdminNotificationController::class, 'userNotifications']);
+        Route::post('notifications/{notification}/mark-read', [AdminNotificationController::class, 'markAsRead']);
+        Route::post('notifications/bulk-actions', [AdminNotificationController::class, 'bulkActions']);
+        Route::get('notifications/export', [AdminNotificationController::class, 'exportNotifications']);
+
+        // Survey Questions and Answers
         Route::apiResource('survey-questions', SurveyQuestionController::class);
         Route::apiResource('survey-answers', SurveyAnswerController::class);
         Route::apiResource('rewards', RewardController::class);
-        Route::apiResource('user-points', UserPointController::class);
-        
-        Route::get('user-points/{userId}/total', [UserPointController::class, 'userTotal']);
     });
 
     // Family routes
     Route::prefix('family')->middleware('role:family')->group(function () {
-        // Family member routes for viewing patient data
+        // Dashboard and overview
+        Route::get('dashboard', [FamilyController::class, 'dashboard']);
+        Route::get('linked-patients', [FamilyController::class, 'linkedPatients']);
+        
+        // Patient-specific routes
+        Route::prefix('patients/{patient}')->group(function () {
+            Route::get('overview', [FamilyController::class, 'patientOverview']);
+            Route::get('glucose-readings', [FamilyController::class, 'patientGlucoseReadings']);
+            Route::get('nutrition-logs', [FamilyController::class, 'patientNutritionLogs']);
+            Route::get('workout-logs', [FamilyController::class, 'patientWorkoutLogs']);
+            Route::get('medications', [FamilyController::class, 'patientMedications']);
+            Route::get('doctor-notes', [FamilyController::class, 'patientDoctorNotes']);
+            Route::get('meal-plans', [FamilyController::class, 'patientMealPlans']);
+            Route::get('workout-plans', [FamilyController::class, 'patientWorkoutPlans']);
+            
+            // Emergency management
+            Route::post('emergency-contacts', [FamilyController::class, 'createEmergencyContact']);
+            Route::get('emergency-alerts', [FamilyController::class, 'patientEmergencyAlerts']);
+            Route::post('emergency-alerts/{alert}/acknowledge', [FamilyController::class, 'acknowledgeAlert']);
+        });
     });
 
     // Community routes (accessible by all authenticated users)
